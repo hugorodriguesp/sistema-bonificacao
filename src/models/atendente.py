@@ -1,18 +1,20 @@
-from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-from src.models.user import db
 
-class Atendente(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    cargo = db.Column(db.String(50), nullable=False)
-    data_contratacao = db.Column(db.DateTime, default=datetime.utcnow)
-    ativo = db.Column(db.Boolean, default=True)
-    pontuacao_atual = db.Column(db.Integer, default=100)
+class Atendente:
+    _id_counter = 1
+    _atendentes = {}
     
-    # Relacionamento com avaliações
-    avaliacoes = db.relationship('Avaliacao', backref='atendente', lazy=True)
+    def __init__(self, nome, email, cargo):
+        self.id = Atendente._id_counter
+        Atendente._id_counter += 1
+        self.nome = nome
+        self.email = email
+        self.cargo = cargo
+        self.data_contratacao = datetime.utcnow()
+        self.ativo = True
+        self.pontuacao_atual = 100
+        self.avaliacoes = []
+        Atendente._atendentes[self.id] = self
     
     def __repr__(self):
         return f'<Atendente {self.nome}>'
@@ -23,8 +25,20 @@ class Atendente(db.Model):
             'nome': self.nome,
             'email': self.email,
             'cargo': self.cargo,
-            'data_contratacao': self.data_contratacao.isoformat() if self.data_contratacao else None,
+            'data_contratacao': self.data_contratacao.isoformat(),
             'ativo': self.ativo,
             'pontuacao_atual': self.pontuacao_atual
         }
-
+    
+    @classmethod
+    def get_all(cls):
+        return list(cls._atendentes.values())
+    
+    @classmethod
+    def get_by_id(cls, id):
+        return cls._atendentes.get(id)
+    
+    @classmethod
+    def delete(cls, id):
+        if id in cls._atendentes:
+            del cls._atendentes[id]
